@@ -1,0 +1,94 @@
+import pandas as pd
+import xlrd
+from xlrd import open_workbook, cellname, xldate_as_tuple, error_text_from_code
+
+class ExcelSheetUtilities:
+
+	def __init__(self, excel_path, sheet_name):
+		self.wb = xlrd.open_workbook(excel_path)
+
+		self.sheet = self.wb.sheet_by_name(sheet_name)
+
+	def parse_cell_value(self, cell):
+		if cell.ctype == xlrd.XL_CELL_DATE:
+			year, month, day, hour, minute, second = xldate_as_tuple(cell.value, self.sheet.book.datemode)
+			# print(xldate_as_tuple(cell.value, self.sheet.book.datemode))
+			return ''+ str(day) + '/' + str(month) + '/' + str(year)
+		elif cell.ctype == xlrd.XL_CELL_ERROR:
+			return ['error', error_text_from_code[cell.value]]
+		elif cell.ctype == xlrd.XL_CELL_TEXT:
+			return cell.value
+		elif cell.ctype == xlrd.XL_CELL_BOOLEAN:
+			return False if cell.value == 0 else True
+		elif cell.ctype == xlrd.XL_CELL_EMPTY:
+			return None
+		# print(cell.value)
+		return cell.value
+
+	def get_cell(self, row_index, column_index):
+		return self.sheet.cell(row_index, column_index)
+
+	def get_cell_value(self, row_index, col_index):
+		return self.parse_cell_value(self.get_cell(row_index, col_index))
+
+	def get_number_of_sheets(self):
+		return self.wb.nsheets
+
+	def get_sheet_names(self):
+		return self.wb.sheet_names()
+
+	def get_merged_cell_ranges(self):
+		return self.sheet.merged_cells
+
+	def get_number_of_rows(self):
+		return self.sheet.nrows
+
+	def get_number_of_columns(self):
+		return self.sheet.ncols
+
+	def get_cell_by_index(self, row_index, col_index):
+		return self.sheet.cell(row_index, col_index)
+
+	def print_content(self):
+		for row_index in range(self.get_number_of_rows()):
+			for col_index in range(self.get_number_of_columns()):
+				print("{} ".format(self.get_cell_value(row_index, col_index)), end=" ")
+			print()
+
+	def get_data_by_row_number(self, row_number):
+		merged_cells = self.get_merged_cell_ranges()
+		test_case_data = {}
+		for cell_range in merged_cells:
+			print(cell_range)
+			test_step_name = ""
+			test_step_data = {}
+			for col_index in range(cell_range[2], cell_range[3]):
+				if self.get_cell_value(0, col_index) is not None:
+					test_step_name = self.get_cell_value(0, col_index)
+				test_case_data[test_step_name] = {}
+				test_step_key = self.get_cell_value(1, col_index)
+				test_step_value = self.get_cell_value(row_number, col_index)
+				test_step_data[test_step_key] = test_step_value
+				print("{} ".format(test_step_name), end=" ")
+				print("{} ".format(test_step_key), end=" ")
+				print("{} ".format(test_step_value), end=" ")
+				print(str(col_index))
+			test_case_data[test_step_name] = test_step_data
+			print()
+		return test_case_data
+
+excel_path = "G:\\Java_Projects\\Cigniti_Frameworks\\SIS_WebServices_Three\\Version_One\\TestData_4.xlsx"
+
+esu = ExcelSheetUtilities(excel_path, "SeedData")
+
+print(esu.get_number_of_columns())
+print(esu.get_number_of_rows())
+print(esu.get_merged_cell_ranges())
+test_case_data = esu.get_data_by_row_number(6)
+print(test_case_data)
+
+
+
+
+
+
